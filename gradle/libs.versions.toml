@@ -1,5 +1,6 @@
 [versions]
 agp = "8.7.2"
+faceDetection = "17.0.1"
 kotlin = "2.0.0"
 coreKtx = "1.10.1"
 junit = "4.13.2"
@@ -11,7 +12,7 @@ composeBom = "2024.04.01"
 material-icons-extended = "1.5.1"
 
 # ML KIT
-mlkit = "17.0.1"
+mlkit = "17.0.2"
 
 #TENSORFLOW
 tensorflow = "2.6.0"
@@ -33,6 +34,7 @@ serialization = "2.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+face-detection-v1701 = { module = "com.google.mlkit:face-detection", version.ref = "faceDetection" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -50,6 +52,7 @@ material-icons-extended = { group = "androidx.compose.material", name = "materia
 
 # ML KIT
 object-detection = { group = "com.google.mlkit", name = "object-detection", version.ref = "mlkit" }
+face-detection = { group = "com.google.mlkit", name = "face-detection", version.ref = "mlkit" }
 
 #TENSORFLOW
 tensorflow-lite = { group = "org.tensorflow", name = "tensorflow-lite", version.ref = "tensorflow" }

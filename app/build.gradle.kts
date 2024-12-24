@@ -83,6 +83,8 @@ dependencies {
     
     // ML Kit
     implementation("com.google.mlkit:object-detection:17.0.1")
+    implementation("com.google.mlkit:face-detection:16.1.7")
+//    implementation(libs.face.detection)
     
 }
 
