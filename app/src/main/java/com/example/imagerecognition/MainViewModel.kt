@@ -2,6 +2,7 @@ package com.example.imagerecognition
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.renderscript.ScriptGroup.Input
 import androidx.camera.core.CameraSelector
 import androidx.camera.view.CameraController
 import androidx.lifecycle.ViewModel
@@ -10,6 +11,7 @@ import com.example.imagerecognition.utils.compareFaces
 import com.example.imagerecognition.utils.compareLandmarks
 import com.example.imagerecognition.utils.detectFaceFeatures
 import com.example.imagerecognition.utils.loadBitmapFromFile
+import com.example.imagerecognition.utils.objectDetector
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
@@ -147,7 +149,7 @@ class MainViewModel @Inject constructor() : ViewModel() {
             println("result convert to face: $faceRegistered $faceLivePhoto")
             
             if (registeredPhoto == null) {
-                _registeredFaceNotDetected.value = "Face live detection failed"
+                _registeredFaceNotDetected.value = "Face live detection failed: No face detected"
             } else {
                 detectFaceFeatures(
                     registeredPhoto,
@@ -161,10 +163,35 @@ class MainViewModel @Inject constructor() : ViewModel() {
                 )
             }
             
-            
             if (faceLivePhoto == null) {
-                _liveFaceNotDetected.value = "Face live detection failed"
+                _liveFaceNotDetected.value = "Face live detection failed: No face detected"
             }
+            
+            // Object detection live photo
+            val liveImage = InputImage.fromBitmap(livePhoto!!, 0)
+            objectDetector().process(liveImage)
+                .addOnSuccessListener { detectedObjects ->
+                    if (detectedObjects.isEmpty()) {
+                        println("No objects detected.")
+                    } else {
+                        println("Detected objects count: ${detectedObjects.size}")
+                        for (detectedObject in detectedObjects) {
+                            val boundingBox = detectedObject.boundingBox
+                            println("Bounding Box: $boundingBox")
+                            if (detectedObject.labels.isEmpty()) {
+                                println("No labels detected for this object.")
+                            } else {
+                                for (label in detectedObject.labels) {
+                                    println("Label: ${label.text}, Confidence: ${label.confidence}")
+                                }
+                            }
+                        }
+                    }
+                }
+                .addOnFailureListener { e ->
+                    println("Detection failed: ${e.message}")
+                }
+            
             
             if (faceRegistered != null && faceLivePhoto != null) {
                 println("on compare faces: Registered face bounding box: ${faceRegistered?.boundingBox}")

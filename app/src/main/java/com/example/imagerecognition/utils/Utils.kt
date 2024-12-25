@@ -24,6 +24,7 @@ import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import com.google.mlkit.vision.face.FaceLandmark
+import com.google.mlkit.vision.objects.ObjectDetector
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.ByteArrayOutputStream
@@ -102,10 +103,14 @@ fun ImageProxy.toInputImage(): InputImage {
     return InputImage.fromMediaImage(mediaImage as Image, rotation)
 }
 
-val mlKitObjectDetection =
-    ObjectDetectorOptions.Builder().setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE)
-        .enableClassification().build()
-val objectDetector = ObjectDetection.getClient(mlKitObjectDetection)
+fun objectDetector(): ObjectDetector {
+    val mlKitObjectDetection =
+        ObjectDetectorOptions.Builder().setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE)
+            .enableMultipleObjects()
+            .enableClassification().build()
+    val objectDetector = ObjectDetection.getClient(mlKitObjectDetection)
+    return objectDetector
+}
 
 fun detectFaceFeatures(
     bitmap: Bitmap, onFeaturesExtracted: (List<Face>) -> Unit,

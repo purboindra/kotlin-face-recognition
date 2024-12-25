@@ -64,6 +64,7 @@ dependencies {
     
     // Tensorflow
     implementation(libs.tensorflow.lite)
+    implementation(libs.tensorflow.lite.support)
     
     // Camera
     implementation(libs.camera.core)
