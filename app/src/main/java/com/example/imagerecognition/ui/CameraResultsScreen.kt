@@ -141,21 +141,19 @@ fun CameraResultsScreen(mainViewModel: MainViewModel, navHostController: NavHost
                 if (isLoadingIdentify) CircularProgressIndicator() else Text("Identify")
             }
             Box(modifier = Modifier.height(10.dp))
-            ElevatedButton(
-                onClick = {
-                    if (registeredPhoto != null) {
-                        val bitmapJson = serializeBitmap(registeredPhoto!!)
-                        val faceJson = serializeFaces(mainViewModel.registeredFaces.value)
-                        navHostController.navigate(
-                            "show_detection_result",
-                        )
-                    }
-                },
-                enabled = registeredFaces.isNotEmpty(),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Show Detection Results")
-            }
+//            ElevatedButton(
+//                onClick = {
+//                    if (registeredPhoto != null) {
+//                        navHostController.navigate(
+//                            "show_detection_result",
+//                        )
+//                    }
+//                },
+//                enabled = registeredFaces.isNotEmpty(),
+//                modifier = Modifier.fillMaxWidth()
+//            ) {
+//                Text("Show Detection Results")
+//            }
         }
     }
 }
