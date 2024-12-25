@@ -8,17 +8,25 @@ import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -34,14 +42,13 @@ import com.example.imagerecognition.utils.takePhoto
 fun CameraPreview(
     mainViewModel: MainViewModel,
     navHostController: NavHostController,
-    isLivePhoto:Boolean,
+    isLivePhoto: Boolean,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
-
+    
     val loadingImage by mainViewModel.loadingImage.collectAsState()
-    val bitmap by mainViewModel.bitmap.collectAsState()
-
+    
     val cameraController = remember {
         LifecycleCameraController(context).apply {
             setEnabledUseCases(
@@ -49,7 +56,7 @@ fun CameraPreview(
             )
         }
     }
-
+    
     DisposableEffect(cameraController) {
         cameraController.bindToLifecycle(lifecycleOwner)
         Log.d("CameraLifecycle", "Camera bound to lifecycle")
@@ -58,10 +65,9 @@ fun CameraPreview(
             cameraController.unbind()
         }
     }
-
-
+    
     Box(modifier = Modifier.fillMaxSize()) {
-
+        
         AndroidView(
             factory = {
                 PreviewView(it).apply {
@@ -70,7 +76,22 @@ fun CameraPreview(
                 }
             }, modifier = Modifier.fillMaxSize()
         )
-
+        
+        IconButton(
+            onClick = {
+                mainViewModel.toggleCamera(cameraController)
+            },
+            modifier = Modifier
+                .padding(24.dp)
+                .safeContentPadding()
+        ) {
+            Icon(
+                Icons.Filled.Cameraswitch,
+                contentDescription = "Switch Camera",
+                tint = Color.White,
+            )
+        }
+        
         Button(
             onClick = {
                 mainViewModel.changeLoading(true)
@@ -78,14 +99,15 @@ fun CameraPreview(
                     controller = cameraController,
                     isLivePhoto = isLivePhoto,
                     onPhotoTaken = { photo ->
-                        mainViewModel.onTakePhoto(photo)
+                        mainViewModel.onTakePhoto(photo, isLivePhoto)
                         mainViewModel.changeLoading(false)
                         navHostController.popBackStack()
                     })
-
+                
             }, modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(16.dp)
+                .padding(32.dp)
+                .safeContentPadding()
         ) {
             if (loadingImage) CircularProgressIndicator() else Text("Capture Photo")
         }

@@ -2,53 +2,83 @@ package com.example.imagerecognition
 
 import android.content.Context
 import android.graphics.Bitmap
+import androidx.camera.core.CameraSelector
+import androidx.camera.view.CameraController
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.imagerecognition.utils.compareFaces
+import com.example.imagerecognition.utils.compareLandmarks
+import com.example.imagerecognition.utils.detectFaceFeatures
 import com.example.imagerecognition.utils.loadBitmapFromFile
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 @HiltViewModel
 class MainViewModel @Inject constructor() : ViewModel() {
-    private val _bitmap = MutableStateFlow<List<Bitmap>>(emptyList())
-    val bitmap = _bitmap.asStateFlow()
-
+    private val _registeredPhotoBitmap = MutableStateFlow<Bitmap?>(null)
+    val registeredPhotoBitmap = _registeredPhotoBitmap.asStateFlow()
+    
+    private val _livePhotoBitmap = MutableStateFlow<Bitmap?>(null)
+    val livePhotoBitmap = _livePhotoBitmap.asStateFlow()
+    
     private val _loadingImage = MutableStateFlow<Boolean>(false)
     val loadingImage = _loadingImage.asStateFlow()
-
+    
     private val _isLivePhoto = MutableStateFlow<Boolean>(false)
     val isLivePhoto = _isLivePhoto.asStateFlow()
-
+    
     private val _isLoadingIdentify = MutableStateFlow<Boolean>(false)
     val isLoadingIdentify = _isLoadingIdentify.asStateFlow()
-
+    
+    private val _isUsingBackCamera = MutableStateFlow<Boolean>(false)
+    
+    private val _registeredFaceNotDetected = MutableStateFlow<String?>(null)
+    val registeredFaceNotDetected = _registeredFaceNotDetected.asStateFlow()
+    
+    private val _liveFaceNotDetected = MutableStateFlow<String?>(null)
+    val liveFaceNotDetected = _liveFaceNotDetected.asStateFlow()
+    
+    private val _registeredFaces = MutableStateFlow<List<Face>>(emptyList())
+    val registeredFaces = _registeredFaces.asStateFlow()
+    
+    fun toggleCamera(cameraController: CameraController) {
+        _isUsingBackCamera.value = !_isUsingBackCamera.value
+        cameraController.cameraSelector = if (_isUsingBackCamera.value) {
+            CameraSelector.DEFAULT_BACK_CAMERA
+        } else {
+            CameraSelector.DEFAULT_FRONT_CAMERA
+        }
+    }
+    
+    
     fun changeLoading(value: Boolean) {
         _loadingImage.value = value
         println("Loading state: ${_loadingImage.value}")
     }
-
+    
     fun setIsLivePhoto(value: Boolean) {
         _isLivePhoto.value = value
     }
-
-    fun onTakePhoto(bitmap: Bitmap) {
-        _bitmap.value += bitmap
-        println("onTapPhoto: ${_bitmap.value}")
-        _loadingImage.value = false
+    
+    fun onTakePhoto(bitmap: Bitmap, isLivePhoto: Boolean = false) {
+        if (isLivePhoto) {
+            _livePhotoBitmap.value = bitmap
+        } else {
+            _registeredPhotoBitmap.value = bitmap
+        }
     }
-
+    
     fun onLoadImageBitmapFromFile(context: Context) {
         changeLoading(true)
         val loadImageBitmap = loadBitmapFromFile("registered_face.png", context)
@@ -58,41 +88,96 @@ class MainViewModel @Inject constructor() : ViewModel() {
             changeLoading(false)
         }
     }
-
-    private suspend fun convertBitmapToFace(bitmap: Bitmap): Face? = suspendCancellableCoroutine {
-        val inputImage = InputImage.fromBitmap(bitmap, 0)
-
-        val options = FaceDetectorOptions.Builder()
-            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
-            .enableTracking()
-            .build()
-
-        val faceDetector = FaceDetection.getClient(options)
-
-        faceDetector.process(inputImage).addOnSuccessListener { faces ->
-            if (faces.isNotEmpty()) {
-                val face = faces.first()
-                println("Face detected: $face")
-            }
-        }.addOnFailureListener { exception ->
-            println("Face detection failed: $exception")
+    
+    private suspend fun convertBitmapToFace(bitmap: Bitmap): Face? =
+        suspendCancellableCoroutine { cont ->
+            val inputImage = InputImage.fromBitmap(bitmap, 0)
+            
+            val options = FaceDetectorOptions.Builder()
+                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
+                .setContourMode(FaceDetectorOptions.CONTOUR_MODE_NONE)
+                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+                .setMinFaceSize(0.5f)
+                .enableTracking()
+                .build()
+            
+            val faceDetector = FaceDetection.getClient(options)
+            
+            faceDetector.process(inputImage)
+                .addOnSuccessListener { faces ->
+                    if (faces.isNotEmpty()) {
+                        cont.resume(faces.first())
+                    } else {
+                        cont.resumeWith(Result.success(null))
+                    }
+                }
+                .addOnFailureListener { exception ->
+                    cont.resumeWithException(exception)
+                }
         }
-    }
-
-    fun onCompareFaces(bitmap: Bitmap?) {
-        _isLoadingIdentify.value = true;
-        bitmap?.let {
-            viewModelScope.launch {
-                val face = try {
+    
+    
+    fun onCompareFaces(registeredPhoto: Bitmap?, livePhoto: Bitmap?) {
+        viewModelScope.launch {
+            _isLoadingIdentify.value = true;
+            
+            // Reset error message
+            _registeredFaceNotDetected.value = null
+            _liveFaceNotDetected.value = null
+            
+            val faceRegistered = registeredPhoto?.let {
+                try {
                     convertBitmapToFace(it)
                 } catch (e: Exception) {
-                    println("Face detection failed: ${e.message}")
+                    println("Face registered detection failed: ${e.message}")
                     null
                 }
-
-                println("on compare faces: ${face?.boundingBox}")
             }
+            
+            val faceLivePhoto = livePhoto?.let {
+                try {
+                    convertBitmapToFace(it)
+                } catch (e: Exception) {
+                    println("Face live photo detection failed: ${e.message}")
+                    null
+                }
+            }
+            
+            println("result convert to face: $faceRegistered $faceLivePhoto")
+            
+            if (registeredPhoto == null) {
+                _registeredFaceNotDetected.value = "Face live detection failed"
+            } else {
+                detectFaceFeatures(
+                    registeredPhoto,
+                    { faces ->
+                        println("detectFaceFeatures: Registered face features: $faces")
+                        _registeredFaces.value = faces
+                    },
+                    { e ->
+                        println("detectFaceFeatures: Registered face features detection failed: ${e.message}")
+                    }
+                )
+            }
+            
+            
+            if (faceLivePhoto == null) {
+                _liveFaceNotDetected.value = "Face live detection failed"
+            }
+            
+            if (faceRegistered != null && faceLivePhoto != null) {
+                println("on compare faces: Registered face bounding box: ${faceRegistered?.boundingBox}")
+                println("on compare faces: Live photo face bounding box: ${faceLivePhoto?.boundingBox}")
+                val isMatch = compareFaces(faceRegistered, faceLivePhoto)
+                val isLandmarkMatch = compareLandmarks(faceRegistered, faceLivePhoto)
+                
+                println("on compare faces: Faces match: $isMatch")
+                println("on compare faces: Faces isLandmarkMatch: $isLandmarkMatch")
+            } else {
+                println("Face detection failed: One or both faces are null.")
+            }
+            _isLoadingIdentify.value = false;
         }
-        _isLoadingIdentify.value = false;
     }
 }

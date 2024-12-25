@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.media.Image
+import android.util.Base64
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.camera.core.ExperimentalGetImage
@@ -15,12 +16,17 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.camera.view.LifecycleCameraController
 import androidx.core.content.ContextCompat
+import com.example.imagerecognition.data.SerializableFace
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
+import com.google.mlkit.vision.face.FaceLandmark
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.math.sqrt
@@ -37,25 +43,25 @@ fun takePhoto(
         object : OnImageCapturedCallback() {
             override fun onCaptureSuccess(image: ImageProxy) {
                 super.onCaptureSuccess(image)
-
+                
                 try {
                     val matrix = Matrix().apply {
                         postRotate(image.imageInfo.rotationDegrees.toFloat())
                     }
-
+                    
                     val rotatedBitmap = Bitmap.createBitmap(
                         image.toBitmap(),
                         0, 0, image.width, image.height, matrix, true
                     )
-
+                    
                     Log.d("CameraCapture", "Photo taken successfully: $rotatedBitmap")
                     Log.d("CameraCapture", "Is live photo: $isLivePhoto")
-
+                    
                     if (!isLivePhoto) {
                         // Save locally
                         saveBitmapToFile(rotatedBitmap, "registered_face.png", context)
                     }
-
+                    
                     onPhotoTaken(rotatedBitmap)
                 } catch (e: Exception) {
                     Log.e("CameraCapture", "Error processing image: ${e.message}", e)
@@ -63,7 +69,7 @@ fun takePhoto(
                     image.close()
                 }
             }
-
+            
             override fun onError(exception: ImageCaptureException) {
                 super.onError(exception)
                 Log.e("Camera onError", "Couldn't take photo: ", exception)
@@ -77,7 +83,7 @@ object CameraUtils {
         Manifest.permission.CAMERA,
         Manifest.permission.RECORD_AUDIO,
     )
-
+    
     fun hasRequiredPermission(context: Context): Boolean {
         return CAMERAX_PERMISSIONS.all {
             ContextCompat.checkSelfPermission(
@@ -108,7 +114,11 @@ fun detectFaceFeatures(
     val inputImage = InputImage.fromBitmap(bitmap, 0)
     val detector = FaceDetection.getClient(
         FaceDetectorOptions.Builder()
-            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE).enableTracking()
+            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+            .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
+            .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
+            .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+            .enableTracking()
             .build()
     )
     detector.process(inputImage).addOnSuccessListener { faces ->
@@ -130,10 +140,28 @@ fun compareFaces(registeredFace: Face, liveFace: Face): Boolean {
     return distance < distanceThreshold
 }
 
+fun compareLandmarks(registeredFace: Face, liveFace: Face): Boolean {
+    
+    val registeredPhotoEye = registeredFace.getLandmark(FaceLandmark.LEFT_EYE)?.position
+    val livePhotoEye = liveFace.getLandmark(FaceLandmark.LEFT_EYE)?.position
+    
+    if (registeredPhotoEye != null && livePhotoEye != null) {
+        val dx = registeredPhotoEye.x - livePhotoEye.x
+        val dy = registeredPhotoEye.y - livePhotoEye.y
+        val distance = sqrt(dx * dx + dy * dy)
+        
+        val threshold = 10
+        return distance < threshold
+    }
+    
+    return false
+}
+
+
 fun cosineSimilarity(embedding1: FloatArray, embedding2: FloatArray): Float {
     val dotProduct = embedding1.zip(embedding2) { a, b -> a * b }.sum()
-    val norm1 = Math.sqrt(embedding1.map { it * it }.sum().toDouble())
-    val norm2 = Math.sqrt(embedding2.map { it * it }.sum().toDouble())
+    val norm1 = sqrt(embedding1.map { it * it }.sum().toDouble())
+    val norm2 = sqrt(embedding2.map { it * it }.sum().toDouble())
     return (dotProduct / (norm1 * norm2)).toFloat()
 }
 
@@ -153,4 +181,39 @@ fun loadBitmapFromFile(fileName: String, context: Context): Bitmap? {
     } else {
         null
     }
+}
+
+fun Face.toSerializableFace(): SerializableFace {
+    return SerializableFace(
+        boundingBox = "${boundingBox.left},${boundingBox.top},${boundingBox.right},${boundingBox.bottom}",
+        trackingId = trackingId,
+        smileProbability = smilingProbability,
+        leftEyeOpenProbability = leftEyeOpenProbability,
+        rightEyeOpenProbability = rightEyeOpenProbability
+    )
+}
+
+fun SerializableFace.toFace(): Face {
+    throw UnsupportedOperationException("Cannot convert SerializableFace back to Face directly")
+}
+
+fun serializeFaces(faces: List<Face>): String {
+    val serializableFaces = faces.map { it.toSerializableFace() }
+    return Json.encodeToString(serializableFaces)
+}
+
+fun deserializableFaceData(json: String): List<SerializableFace> {
+    return Json.decodeFromString(json)
+}
+
+fun serializeBitmap(bitmap: Bitmap): String {
+    val outputStream = ByteArrayOutputStream()
+    bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+    val byteArray = outputStream.toByteArray()
+    return Base64.encodeToString(byteArray, Base64.DEFAULT)
+}
+
+fun deserializeBitmap(base64: String): Bitmap {
+    val byteArray = Base64.decode(base64, Base64.DEFAULT)
+    return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
 }
