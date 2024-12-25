@@ -30,6 +30,7 @@ import kotlinx.serialization.json.Json
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.math.pow
 import kotlin.math.sqrt
 
 
@@ -143,6 +144,30 @@ fun compareFaces(registeredFace: Face, liveFace: Face): Boolean {
     val dy = registeredFace.boundingBox.centerY() - liveFace.boundingBox.centerY()
     val distance = sqrt((dx * dy + dy * dx).toDouble())
     return distance < distanceThreshold
+}
+
+fun calculateLandmarkSimiliarity(registeredFace: Face, liveFace: Face): Float {
+    val registeredFaceLandmark = listOf(
+        registeredFace.getLandmark(FaceLandmark.LEFT_EYE)?.position,
+        registeredFace.getLandmark(FaceLandmark.RIGHT_EYE)?.position,
+        registeredFace.getLandmark(FaceLandmark.NOSE_BASE)?.position,
+    )
+    
+    val liveFaceLandmark = listOf(
+        liveFace.getLandmark(FaceLandmark.LEFT_EYE)?.position,
+        liveFace.getLandmark(FaceLandmark.RIGHT_EYE)?.position,
+        liveFace.getLandmark(FaceLandmark.NOSE_BASE)?.position,
+    )
+    
+    val distances = registeredFaceLandmark.zip(liveFaceLandmark).mapNotNull { (registered, live) ->
+        if (registered != null && live != null) {
+            sqrt((registered.x - live.x).pow(2) + (registered.y - live.y).pow(2))
+        } else {
+            null
+        }
+    }
+    
+    return distances.average().toFloat()
 }
 
 fun compareLandmarks(registeredFace: Face, liveFace: Face): Boolean {
