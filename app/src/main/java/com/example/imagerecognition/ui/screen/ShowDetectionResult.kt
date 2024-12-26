@@ -1,6 +1,5 @@
-package com.example.imagerecognition.ui
+package com.example.imagerecognition.ui.screen
 
-import android.graphics.Bitmap
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -14,9 +13,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import com.example.imagerecognition.MainViewModel
-import com.example.imagerecognition.data.SerializableFace
-import com.google.mlkit.vision.face.Face
+import com.example.imagerecognition.ui.viewmodel.MainViewModel
 
 @Composable
 fun ShowFaceDetectionResult(

@@ -1,8 +1,7 @@
-package com.example.imagerecognition
+package com.example.imagerecognition.ui.viewmodel
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.renderscript.ScriptGroup.Input
 import androidx.camera.core.CameraSelector
 import androidx.camera.view.CameraController
 import androidx.lifecycle.ViewModel
@@ -17,7 +16,6 @@ import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch

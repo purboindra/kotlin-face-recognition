@@ -1,6 +1,5 @@
-package com.example.imagerecognition.ui
+package com.example.imagerecognition.ui.screen
 
-import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,12 +30,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.example.imagerecognition.MainViewModel
-import com.example.imagerecognition.ui.navigation.CameraPreview
-import com.example.imagerecognition.utils.serializeBitmap
-import com.example.imagerecognition.utils.serializeFaces
-import com.example.imagerecognition.utils.takePhoto
-import kotlinx.coroutines.launch
+import com.example.imagerecognition.ui.viewmodel.MainViewModel
 
 @Composable
 fun CameraResultsScreen(mainViewModel: MainViewModel, navHostController: NavHostController) {
@@ -80,7 +74,7 @@ fun CameraResultsScreen(mainViewModel: MainViewModel, navHostController: NavHost
                     ) else ElevatedButton(
                         onClick = {
                             mainViewModel.setIsLivePhoto(false)
-                            navHostController.navigate(CameraPreview)
+//                            navHostController.navigate(CameraPreview)
                         }
                     ) {
                         Text("Register Photo")
@@ -107,13 +101,13 @@ fun CameraResultsScreen(mainViewModel: MainViewModel, navHostController: NavHost
                             .clip(CircleShape)
                             .clickable {
                                 mainViewModel.setIsLivePhoto(true)
-                                navHostController.navigate(CameraPreview)
+//                                navHostController.navigate(CameraPreview)
                             },
                         contentScale = ContentScale.Crop,
                     ) else ElevatedButton(
                         onClick = {
                             mainViewModel.setIsLivePhoto(true)
-                            navHostController.navigate(CameraPreview)
+//                            navHostController.navigate(CameraPreview)
                         },
                         enabled = registeredPhoto != null
                     ) {
