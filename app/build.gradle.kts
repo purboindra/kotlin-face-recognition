@@ -5,22 +5,23 @@ plugins {
     id("org.jetbrains.kotlin.kapt")
     alias(libs.plugins.hilt)
     alias(libs.plugins.serialization)
+    alias(libs.plugins.google.services)
 }
 
 android {
     namespace = "com.example.imagerecognition"
     compileSdk = 34
-    
+
     defaultConfig {
         applicationId = "com.example.imagerecognition"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-        
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-    
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -43,7 +44,7 @@ android {
 }
 
 dependencies {
-    
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -61,33 +62,46 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    
+
     // Tensorflow
     implementation(libs.tensorflow.lite)
     implementation(libs.tensorflow.lite.support)
-    
+
     // Camera
     implementation(libs.camera.core)
     implementation(libs.camera.lifecycle)
     implementation(libs.camera.camera2)
     implementation(libs.camera.view)
-    
+
     // Navigation
     implementation(libs.navigation.compose)
-    
+
     // Hilt
     kapt(libs.hilt.compiler)
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
-    
+
     // Serialization
     implementation(libs.serialization.json)
-    
+
     // ML Kit
     implementation("com.google.mlkit:object-detection:17.0.1")
     implementation("com.google.mlkit:face-detection:16.1.7")
-//    implementation(libs.face.detection)
-    
+
+    // Google Services
+    implementation(libs.google.services)
+//    implementation(platform(libs.firebase.bom))
+
+    // Firebase
+//    implementation(libs.firebase.firestore.ktx)
+//    implementation(libs.firebase.storage.ktx)
+//    implementation(libs.firebase.auth.ktx)
+
+    implementation(platform(libs.google.firebase.bom))
+
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.storage.ktx)
+    implementation(libs.firebase.firestore.ktx)
 }
 
 kapt {

@@ -1,6 +1,7 @@
 [versions]
 agp = "8.7.2"
 faceDetection = "17.0.1"
+firebaseBom = "33.7.0"
 kotlin = "2.0.0"
 coreKtx = "1.10.1"
 junit = "4.13.2"
@@ -10,6 +11,10 @@ lifecycleRuntimeKtx = "2.6.1"
 activityCompose = "1.8.0"
 composeBom = "2024.04.01"
 material-icons-extended = "1.5.1"
+
+# GOOGLE
+google-services = "4.4.2"
+firebase = "32.0.0"
 
 # ML KIT
 mlkit = "17.0.2"
@@ -39,6 +44,8 @@ playServicesMlkitFaceDetection = "17.1.0"
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 face-detection-v1701 = { module = "com.google.mlkit:face-detection", version.ref = "faceDetection" }
+firebase-auth = { module = "com.google.firebase:firebase-auth" }
+google-firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -81,9 +88,17 @@ hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-com
 serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization-json" }
 play-services-mlkit-face-detection = { group = "com.google.android.gms", name = "play-services-mlkit-face-detection", version.ref = "playServicesMlkitFaceDetection" }
 
+#GOOGLE SERVICES
+google-services = { group = "com.google.gms", name = "google-services", version.ref = "google-services" }
+firebase-bom = { group = "com.google.gms", name = "firebase-bom", version.ref = "firebase" }
+firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx" }
+firebase-storage-ktx = { group = "com.google.firebase", name = "firebase-storage-ktx" }
+firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt2" }
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "serialization" }
+google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
