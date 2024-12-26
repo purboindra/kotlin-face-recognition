@@ -33,7 +33,7 @@ fun AppNavHost(navHostController: NavHostController = rememberNavController()) {
             }
 
             composable<Register> {
-                RegisterScreen(navHostController)
+                RegisterScreen(navHostController = navHostController)
             }
 
             composable(
