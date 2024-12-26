@@ -1,0 +1,119 @@
+{
+  "project_info": {
+    "project_number": "455219808222",
+    "firebase_url": "https://add-project-1fd3c-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "add-project-1fd3c",
+    "storage_bucket": "add-project-1fd3c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:455219808222:android:d82fb90064a2c3c45aff4f",
+        "android_client_info": {
+          "package_name": "com.example.chat_app_getx_12_03_2022"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "455219808222-p7gct3ogs2id0f3epm9jtmqc9usmi35i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjVzkH2fRjkGY5k8stwq0j3RfniF7XmaA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "455219808222-p7gct3ogs2id0f3epm9jtmqc9usmi35i.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "455219808222-6bo6gmr7212a0qgduqb7m12aml6j5p4g.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.purboindra"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:455219808222:android:011dbedc884c9e9e5aff4f",
+        "android_client_info": {
+          "package_name": "com.example.imagerecognition"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "455219808222-p7gct3ogs2id0f3epm9jtmqc9usmi35i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjVzkH2fRjkGY5k8stwq0j3RfniF7XmaA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "455219808222-p7gct3ogs2id0f3epm9jtmqc9usmi35i.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "455219808222-6bo6gmr7212a0qgduqb7m12aml6j5p4g.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.purboindra"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:455219808222:android:ec1594499439c6b45aff4f",
+        "android_client_info": {
+          "package_name": "com.purboindra.app_8april_2022"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "455219808222-p7gct3ogs2id0f3epm9jtmqc9usmi35i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjVzkH2fRjkGY5k8stwq0j3RfniF7XmaA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "455219808222-p7gct3ogs2id0f3epm9jtmqc9usmi35i.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "455219808222-6bo6gmr7212a0qgduqb7m12aml6j5p4g.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.purboindra"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
