@@ -23,6 +23,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,15 +34,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Observer
 import androidx.navigation.NavHostController
+import com.example.imagerecognition.ui.viewmodel.RegisterViewModel
 
 @Composable
-fun RegisterScreen(navHostController: NavHostController) {
+fun RegisterScreen(
+    registerViewModel: RegisterViewModel = hiltViewModel<RegisterViewModel>(),
+    navHostController: NavHostController
+) {
 
     val image =
         navHostController.currentBackStackEntry?.savedStateHandle?.getLiveData<String?>("image")
-    val registerImage = remember { mutableStateOf<Bitmap?>(null) }
+    val registeredImage by registerViewModel.registeredPhotoBitmap.collectAsState()
 
     var username by remember {
         mutableStateOf("")
@@ -52,7 +58,7 @@ fun RegisterScreen(navHostController: NavHostController) {
             value?.let {
                 val decodeBitmap = Base64.decode(it, Base64.DEFAULT)
                 val bitmap = BitmapFactory.decodeByteArray(decodeBitmap, 0, decodeBitmap.size)
-                registerImage.value = bitmap
+                registerViewModel.setRegisteredPhoto(bitmap)
             }
         }
         image?.observeForever(observer)
@@ -74,15 +80,18 @@ fun RegisterScreen(navHostController: NavHostController) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
 
-                if (registerImage.value != null) {
+                if (registeredImage != null) {
                     Image(
-                        bitmap = registerImage.value!!.asImageBitmap(),
+                        bitmap = registeredImage!!.asImageBitmap(),
                         contentDescription = "Image Preview",
                         modifier = Modifier
                             .width(102.dp)
                             .height(102.dp)
                             .clip(CircleShape)
                             .clickable {
+                                navHostController.navigate(
+                                    "camera_preview/${false}"
+                                )
                             },
                         contentScale = ContentScale.Crop,
                     )
@@ -101,7 +110,6 @@ fun RegisterScreen(navHostController: NavHostController) {
                 Spacer(modifier = Modifier.width(10.dp))
 
                 OutlinedTextField(
-                    modifier = Modifier.weight(1f),
                     value = username,
                     onValueChange = { value ->
                         username = value
@@ -121,7 +129,7 @@ fun RegisterScreen(navHostController: NavHostController) {
                 onClick = {
 
                 },
-                enabled = registerImage.value != null && username.isNotBlank(),
+                enabled = registeredImage != null && username.isNotBlank(),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Register")

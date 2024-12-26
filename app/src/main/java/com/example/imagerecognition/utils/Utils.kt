@@ -25,11 +25,14 @@ import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import com.google.mlkit.vision.face.FaceLandmark
 import com.google.mlkit.vision.objects.ObjectDetector
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -45,25 +48,25 @@ fun takePhoto(
         object : OnImageCapturedCallback() {
             override fun onCaptureSuccess(image: ImageProxy) {
                 super.onCaptureSuccess(image)
-                
+
                 try {
                     val matrix = Matrix().apply {
                         postRotate(image.imageInfo.rotationDegrees.toFloat())
                     }
-                    
+
                     val rotatedBitmap = Bitmap.createBitmap(
                         image.toBitmap(),
                         0, 0, image.width, image.height, matrix, true
                     )
-                    
+
                     Log.d("CameraCapture", "Photo taken successfully: $rotatedBitmap")
                     Log.d("CameraCapture", "Is live photo: $isLivePhoto")
-                    
+
                     if (!isLivePhoto) {
                         // Save locally
                         saveBitmapToFile(rotatedBitmap, "registered_face.png", context)
                     }
-                    
+
                     onPhotoTaken(rotatedBitmap)
                 } catch (e: Exception) {
                     Log.e("CameraCapture", "Error processing image: ${e.message}", e)
@@ -71,7 +74,7 @@ fun takePhoto(
                     image.close()
                 }
             }
-            
+
             override fun onError(exception: ImageCaptureException) {
                 super.onError(exception)
                 Log.e("Camera onError", "Couldn't take photo: ", exception)
@@ -85,7 +88,7 @@ object CameraUtils {
         Manifest.permission.CAMERA,
         Manifest.permission.RECORD_AUDIO,
     )
-    
+
     fun hasRequiredPermission(context: Context): Boolean {
         return CAMERAX_PERMISSIONS.all {
             ContextCompat.checkSelfPermission(
@@ -112,6 +115,40 @@ fun objectDetector(): ObjectDetector {
     val objectDetector = ObjectDetection.getClient(mlKitObjectDetection)
     return objectDetector
 }
+
+fun isValidFace(face: Face): Boolean {
+    return face.getLandmark(FaceLandmark.LEFT_EYE) != null &&
+            face.getLandmark(FaceLandmark.RIGHT_EYE) != null &&
+            face.getLandmark(FaceLandmark.NOSE_BASE) != null
+}
+
+suspend fun convertBitmapToFace(bitmap: Bitmap): Face? =
+    suspendCancellableCoroutine { cont ->
+        val inputImage = InputImage.fromBitmap(bitmap, 0)
+
+        val options = FaceDetectorOptions.Builder()
+            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+            .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
+            .setContourMode(FaceDetectorOptions.CONTOUR_MODE_NONE)
+            .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+            .setMinFaceSize(0.5f)
+            .enableTracking()
+            .build()
+
+        val faceDetector = FaceDetection.getClient(options)
+
+        faceDetector.process(inputImage)
+            .addOnSuccessListener { faces ->
+                if (faces.isNotEmpty()) {
+                    cont.resume(faces.first())
+                } else {
+                    cont.resumeWith(Result.success(null))
+                }
+            }
+            .addOnFailureListener { exception ->
+                cont.resumeWithException(exception)
+            }
+    }
 
 fun detectFaceFeatures(
     bitmap: Bitmap, onFeaturesExtracted: (List<Face>) -> Unit,
@@ -152,13 +189,13 @@ fun calculateLandmarkSimiliarity(registeredFace: Face, liveFace: Face): Float {
         registeredFace.getLandmark(FaceLandmark.RIGHT_EYE)?.position,
         registeredFace.getLandmark(FaceLandmark.NOSE_BASE)?.position,
     )
-    
+
     val liveFaceLandmark = listOf(
         liveFace.getLandmark(FaceLandmark.LEFT_EYE)?.position,
         liveFace.getLandmark(FaceLandmark.RIGHT_EYE)?.position,
         liveFace.getLandmark(FaceLandmark.NOSE_BASE)?.position,
     )
-    
+
     val distances = registeredFaceLandmark.zip(liveFaceLandmark).mapNotNull { (registered, live) ->
         if (registered != null && live != null) {
             sqrt((registered.x - live.x).pow(2) + (registered.y - live.y).pow(2))
@@ -166,24 +203,24 @@ fun calculateLandmarkSimiliarity(registeredFace: Face, liveFace: Face): Float {
             null
         }
     }
-    
+
     return distances.average().toFloat()
 }
 
 fun compareLandmarks(registeredFace: Face, liveFace: Face): Boolean {
-    
+
     val registeredPhotoEye = registeredFace.getLandmark(FaceLandmark.LEFT_EYE)?.position
     val livePhotoEye = liveFace.getLandmark(FaceLandmark.LEFT_EYE)?.position
-    
+
     if (registeredPhotoEye != null && livePhotoEye != null) {
         val dx = registeredPhotoEye.x - livePhotoEye.x
         val dy = registeredPhotoEye.y - livePhotoEye.y
         val distance = sqrt(dx * dx + dy * dy)
-        
+
         val threshold = 10
         return distance < threshold
     }
-    
+
     return false
 }
 
