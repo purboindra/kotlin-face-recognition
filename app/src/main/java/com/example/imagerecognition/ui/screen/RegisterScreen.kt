@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -33,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Observer
@@ -44,15 +46,15 @@ fun RegisterScreen(
     registerViewModel: RegisterViewModel = hiltViewModel<RegisterViewModel>(),
     navHostController: NavHostController
 ) {
-
+    
+    val context = LocalContext.current
+    
     val image =
         navHostController.currentBackStackEntry?.savedStateHandle?.getLiveData<String?>("image")
     val registeredImage by registerViewModel.registeredPhotoBitmap.collectAsState()
-
-    var username by remember {
-        mutableStateOf("")
-    }
-
+    val isLoading by registerViewModel.isLoadingRegister.collectAsState()
+    val username by registerViewModel.username.collectAsState()
+    
     DisposableEffect(image) {
         val observer = Observer<String?> { value ->
             value?.let {
@@ -66,7 +68,7 @@ fun RegisterScreen(
             image?.removeObserver(observer)
         }
     }
-
+    
     Scaffold(modifier = Modifier.safeContentPadding()) { paddingValues ->
         Column(
             modifier = Modifier
@@ -74,12 +76,12 @@ fun RegisterScreen(
                 .padding(paddingValues),
             verticalArrangement = Arrangement.Center
         ) {
-
+            
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-
+                
                 if (registeredImage != null) {
                     Image(
                         bitmap = registeredImage!!.asImageBitmap(),
@@ -106,14 +108,12 @@ fun RegisterScreen(
                         Text("Take photo")
                     }
                 }
-
+                
                 Spacer(modifier = Modifier.width(10.dp))
-
+                
                 OutlinedTextField(
                     value = username,
-                    onValueChange = { value ->
-                        username = value
-                    },
+                    onValueChange = { registerViewModel.setUsername(it) },
                     label = {
                         Text("Username")
                     },
@@ -122,19 +122,19 @@ fun RegisterScreen(
                     )
                 )
             }
-
+            
             Spacer(modifier = Modifier.height(10.dp))
-
+            
             ElevatedButton(
                 onClick = {
-
+                    registerViewModel.register(context)
                 },
                 enabled = registeredImage != null && username.isNotBlank(),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Register")
+                if (isLoading) CircularProgressIndicator() else Text("Register")
             }
-
+            
         }
     }
 }

@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.media.Image
+import android.net.Uri
 import android.util.Base64
 import android.util.Log
 import androidx.annotation.OptIn
@@ -48,25 +49,25 @@ fun takePhoto(
         object : OnImageCapturedCallback() {
             override fun onCaptureSuccess(image: ImageProxy) {
                 super.onCaptureSuccess(image)
-
+                
                 try {
                     val matrix = Matrix().apply {
                         postRotate(image.imageInfo.rotationDegrees.toFloat())
                     }
-
+                    
                     val rotatedBitmap = Bitmap.createBitmap(
                         image.toBitmap(),
                         0, 0, image.width, image.height, matrix, true
                     )
-
+                    
                     Log.d("CameraCapture", "Photo taken successfully: $rotatedBitmap")
                     Log.d("CameraCapture", "Is live photo: $isLivePhoto")
-
+                    
                     if (!isLivePhoto) {
                         // Save locally
                         saveBitmapToFile(rotatedBitmap, "registered_face.png", context)
                     }
-
+                    
                     onPhotoTaken(rotatedBitmap)
                 } catch (e: Exception) {
                     Log.e("CameraCapture", "Error processing image: ${e.message}", e)
@@ -74,7 +75,7 @@ fun takePhoto(
                     image.close()
                 }
             }
-
+            
             override fun onError(exception: ImageCaptureException) {
                 super.onError(exception)
                 Log.e("Camera onError", "Couldn't take photo: ", exception)
@@ -88,7 +89,7 @@ object CameraUtils {
         Manifest.permission.CAMERA,
         Manifest.permission.RECORD_AUDIO,
     )
-
+    
     fun hasRequiredPermission(context: Context): Boolean {
         return CAMERAX_PERMISSIONS.all {
             ContextCompat.checkSelfPermission(
@@ -125,7 +126,7 @@ fun isValidFace(face: Face): Boolean {
 suspend fun convertBitmapToFace(bitmap: Bitmap): Face? =
     suspendCancellableCoroutine { cont ->
         val inputImage = InputImage.fromBitmap(bitmap, 0)
-
+        
         val options = FaceDetectorOptions.Builder()
             .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
             .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
@@ -134,9 +135,9 @@ suspend fun convertBitmapToFace(bitmap: Bitmap): Face? =
             .setMinFaceSize(0.5f)
             .enableTracking()
             .build()
-
+        
         val faceDetector = FaceDetection.getClient(options)
-
+        
         faceDetector.process(inputImage)
             .addOnSuccessListener { faces ->
                 if (faces.isNotEmpty()) {
@@ -189,13 +190,13 @@ fun calculateLandmarkSimiliarity(registeredFace: Face, liveFace: Face): Float {
         registeredFace.getLandmark(FaceLandmark.RIGHT_EYE)?.position,
         registeredFace.getLandmark(FaceLandmark.NOSE_BASE)?.position,
     )
-
+    
     val liveFaceLandmark = listOf(
         liveFace.getLandmark(FaceLandmark.LEFT_EYE)?.position,
         liveFace.getLandmark(FaceLandmark.RIGHT_EYE)?.position,
         liveFace.getLandmark(FaceLandmark.NOSE_BASE)?.position,
     )
-
+    
     val distances = registeredFaceLandmark.zip(liveFaceLandmark).mapNotNull { (registered, live) ->
         if (registered != null && live != null) {
             sqrt((registered.x - live.x).pow(2) + (registered.y - live.y).pow(2))
@@ -203,24 +204,24 @@ fun calculateLandmarkSimiliarity(registeredFace: Face, liveFace: Face): Float {
             null
         }
     }
-
+    
     return distances.average().toFloat()
 }
 
 fun compareLandmarks(registeredFace: Face, liveFace: Face): Boolean {
-
+    
     val registeredPhotoEye = registeredFace.getLandmark(FaceLandmark.LEFT_EYE)?.position
     val livePhotoEye = liveFace.getLandmark(FaceLandmark.LEFT_EYE)?.position
-
+    
     if (registeredPhotoEye != null && livePhotoEye != null) {
         val dx = registeredPhotoEye.x - livePhotoEye.x
         val dy = registeredPhotoEye.y - livePhotoEye.y
         val distance = sqrt(dx * dx + dy * dy)
-
+        
         val threshold = 10
         return distance < threshold
     }
-
+    
     return false
 }
 
@@ -283,4 +284,12 @@ fun serializeBitmap(bitmap: Bitmap): String {
 fun deserializeBitmap(base64: String): Bitmap {
     val byteArray = Base64.decode(base64, Base64.DEFAULT)
     return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+}
+
+fun bitmapToUri(context: Context, bitmap: Bitmap): Uri {
+    val file = File(context.cacheDir, "temp_image_${System.currentTimeMillis()}.png")
+    FileOutputStream(file).use { outputStream ->
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+    }
+    return Uri.fromFile(file)
 }
