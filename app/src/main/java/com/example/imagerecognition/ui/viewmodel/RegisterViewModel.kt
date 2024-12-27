@@ -8,15 +8,24 @@ import com.example.imagerecognition.data.State
 import com.example.imagerecognition.utils.bitmapToUri
 import com.example.imagerecognition.utils.convertBitmapToFace
 import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
+import com.google.firebase.firestore.firestore
 import com.google.firebase.storage.storage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.serialization.Serializable
 import java.io.File
 import javax.inject.Inject
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+
+data class User(
+    val imageUrl: String = "",
+    val username: String = "",
+    val id: String = "",
+)
 
 @Serializable
 data class RegisterResponse<out T>(val data: T? = null, val message: String? = null)
@@ -48,6 +57,20 @@ class RegisterViewModel @Inject constructor() : ViewModel() {
         _username.value = username
     }
 
+    private suspend fun storeUserToDatabase(userId: String, user: User) {
+        val db = Firebase.firestore
+
+        try {
+            db.collection("users").document(userId.toString()).set(user).await()
+
+            println("DocumentSnapshot successfully written!")
+        } catch (e: Throwable) {
+            println("Error storing user to database: ${e.message}")
+        }
+
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
     fun register(context: Context) {
         _registerState.value = State.Loading
         viewModelScope.launch {
@@ -61,11 +84,12 @@ class RegisterViewModel @Inject constructor() : ViewModel() {
                     return@launch
                 }
 
-                if (face == null) {
-                    val throwable = Throwable("Face not valid")
-                    _registerState.value = State.Error(throwable)
-                    return@launch
-                }
+                /// TODO CHECK IF VALID FACE
+//              launch  if (face == null) {
+//                    val throwable = Throwable("Face not valid")
+//                    _registerState.value = State.Error(throwable)
+//                    return@launch
+//                }
 
                 val registeredUri = bitmapToUri(context, _registeredPhotoBitmap.value!!)
 
@@ -75,15 +99,20 @@ class RegisterViewModel @Inject constructor() : ViewModel() {
 
                 val file = File(registeredUri.path!!)
 
-                imageRef.putFile(registeredUri).addOnSuccessListener {
-                    println("Image uploaded")
-                    file.delete()
-                    changeLoading(false)
-                }.addOnFailureListener {
-                    println("Image upload failed: ${it.message}")
-                    file.delete()
-                    changeLoading(false)
-                }
+                imageRef.putFile(registeredUri).await()
+                file.delete()
+
+                val imageUrl = imageRef.downloadUrl.await().toString()
+                val user = User(
+                    imageUrl = imageUrl,
+                    username = _username.value,
+                    id = Uuid.random().toString()
+                )
+
+                storeUserToDatabase(user.id, user)
+
+                _registerState.value = State.Success(RegisterResponse(data = true))
+
             } catch (e: Exception) {
                 println("Register failed: ${e.message}")
                 _registerState.value = State.Error(e)
