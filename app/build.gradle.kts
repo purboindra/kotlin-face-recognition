@@ -85,8 +85,9 @@ dependencies {
     implementation(libs.serialization.json)
 
     // ML Kit
-    implementation("com.google.mlkit:object-detection:17.0.1")
-    implementation("com.google.mlkit:face-detection:16.1.7")
+    implementation("com.google.mlkit:object-detection:17.0.2")
+    implementation(libs.face.detection.v1617)
+    implementation(libs.image.labeling)
 
     // Google Services
     implementation(libs.google.services)

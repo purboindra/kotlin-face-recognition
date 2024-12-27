@@ -10,3 +10,6 @@ object CameraResults
 
 @Serializable
 object Register
+
+@Serializable
+object Login

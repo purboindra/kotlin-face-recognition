@@ -100,6 +100,9 @@ object CameraUtils {
     }
 }
 
+fun convertBitmapToInputImage(bitmap: Bitmap): InputImage {
+    return InputImage.fromBitmap(bitmap, 0)
+}
 
 @OptIn(ExperimentalGetImage::class)
 fun ImageProxy.toInputImage(): InputImage {

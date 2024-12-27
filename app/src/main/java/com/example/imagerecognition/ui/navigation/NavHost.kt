@@ -13,6 +13,7 @@ import androidx.navigation.navArgument
 import com.example.imagerecognition.ui.viewmodel.MainViewModel
 import com.example.imagerecognition.ui.screen.CameraPreview
 import com.example.imagerecognition.ui.screen.CameraResultsScreen
+import com.example.imagerecognition.ui.screen.LoginScreen
 import com.example.imagerecognition.ui.screen.RegisterScreen
 import com.example.imagerecognition.ui.screen.ShowFaceDetectionResult
 
@@ -34,6 +35,10 @@ fun AppNavHost(navHostController: NavHostController = rememberNavController()) {
 
             composable<Register> {
                 RegisterScreen(navHostController = navHostController)
+            }
+            
+            composable<Login> {
+                LoginScreen(navHostController = navHostController)
             }
 
             composable(
