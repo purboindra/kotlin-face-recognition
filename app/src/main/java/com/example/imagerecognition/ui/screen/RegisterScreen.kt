@@ -3,6 +3,7 @@ package com.example.imagerecognition.ui.screen
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Base64
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +25,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Observer
 import androidx.navigation.NavHostController
+import com.example.imagerecognition.data.State
 import com.example.imagerecognition.ui.viewmodel.RegisterViewModel
 
 @Composable
@@ -46,15 +49,15 @@ fun RegisterScreen(
     registerViewModel: RegisterViewModel = hiltViewModel<RegisterViewModel>(),
     navHostController: NavHostController
 ) {
-    
+
     val context = LocalContext.current
-    
+
     val image =
         navHostController.currentBackStackEntry?.savedStateHandle?.getLiveData<String?>("image")
     val registeredImage by registerViewModel.registeredPhotoBitmap.collectAsState()
-    val isLoading by registerViewModel.isLoadingRegister.collectAsState()
+    val registerState by registerViewModel.registerState.collectAsState()
     val username by registerViewModel.username.collectAsState()
-    
+
     DisposableEffect(image) {
         val observer = Observer<String?> { value ->
             value?.let {
@@ -68,7 +71,22 @@ fun RegisterScreen(
             image?.removeObserver(observer)
         }
     }
-    
+
+    LaunchedEffect(registerState) {
+        when (registerState) {
+            is State.Error -> {
+                val throwable = ((registerState as State.Error).throwable)
+                Toast.makeText(context, throwable.message, Toast.LENGTH_LONG).show()
+            }
+
+            is State.Success -> {
+                Toast.makeText(context, "Success register", Toast.LENGTH_LONG).show()
+            }
+
+            else -> {}
+        }
+    }
+
     Scaffold(modifier = Modifier.safeContentPadding()) { paddingValues ->
         Column(
             modifier = Modifier
@@ -76,12 +94,12 @@ fun RegisterScreen(
                 .padding(paddingValues),
             verticalArrangement = Arrangement.Center
         ) {
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                
+
                 if (registeredImage != null) {
                     Image(
                         bitmap = registeredImage!!.asImageBitmap(),
@@ -108,9 +126,9 @@ fun RegisterScreen(
                         Text("Take photo")
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.width(10.dp))
-                
+
                 OutlinedTextField(
                     value = username,
                     onValueChange = { registerViewModel.setUsername(it) },
@@ -122,19 +140,19 @@ fun RegisterScreen(
                     )
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(10.dp))
-            
+
             ElevatedButton(
                 onClick = {
                     registerViewModel.register(context)
                 },
-                enabled = registeredImage != null && username.isNotBlank(),
+                enabled = registerState is State.Loading || registeredImage != null && username.isNotBlank(),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                if (isLoading) CircularProgressIndicator() else Text("Register")
+                if (registerState is State.Loading) CircularProgressIndicator() else Text("Register")
             }
-            
+
         }
     }
 }
