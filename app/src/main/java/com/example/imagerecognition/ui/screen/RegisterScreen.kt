@@ -165,53 +165,60 @@ fun RegisterScreen(
             
             Spacer(modifier = Modifier.height(10.dp))
             
-            LazyColumn {
-                items(imageLabels) { item ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            item.label,
-                            modifier = Modifier.width(48.dp),
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.Top
+            if (registerState is State.Error) Column {
+                Text(
+                    text = "Error: ${(registerState as State.Error).throwable.message}",
+                    color = MaterialTheme.colorScheme.error
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                LazyColumn {
+                    items(imageLabels) { item ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Confidence", style = MaterialTheme.typography.labelMedium)
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row(verticalAlignment = Alignment.Top) {
-                                
-                                Canvas(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(12.dp)
-                                ) {
-                                    drawLine(
-                                        color = Color.Gray.copy(0.5f),
-                                        start = Offset(0f, size.height / 2),
-                                        end = Offset(size.width, size.height / 2),
-                                        strokeWidth = size.height
-                                    )
+                            Text(
+                                item.label,
+                                modifier = Modifier.width(48.dp),
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.Top
+                            ) {
+                                Text("Confidence", style = MaterialTheme.typography.labelMedium)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Row(verticalAlignment = Alignment.Top) {
                                     
-                                    drawLine(
-                                        color = Color.Red,
-                                        start = Offset(0f, 0f),
-                                        end = Offset(item.confidence * size.width, 0f),
-                                        strokeWidth = size.height
+                                    Canvas(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(12.dp)
+                                    ) {
+                                        drawLine(
+                                            color = Color.Gray.copy(0.27f),
+                                            start = Offset(0f, size.height / 2),
+                                            end = Offset(size.width, size.height / 2),
+                                            strokeWidth = size.height
+                                        )
+                                        
+                                        drawLine(
+                                            color = Color.Red,
+                                            start = Offset(0f, 0f),
+                                            end = Offset(item.confidence * size.width, 0f),
+                                            strokeWidth = size.height
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        "${(item.confidence * 100).toInt()}%",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        modifier = Modifier.width(24.dp)
                                     )
                                 }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    "${(item.confidence * 100).toInt()}%",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    modifier = Modifier.width(24.dp)
-                                )
                             }
                         }
                     }
