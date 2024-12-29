@@ -264,31 +264,6 @@ fun Face.toSerializableFace(): SerializableFace {
     )
 }
 
-fun SerializableFace.toFace(): Face {
-    throw UnsupportedOperationException("Cannot convert SerializableFace back to Face directly")
-}
-
-fun serializeFaces(faces: List<Face>): String {
-    val serializableFaces = faces.map { it.toSerializableFace() }
-    return Json.encodeToString(serializableFaces)
-}
-
-fun deserializableFaceData(json: String): List<SerializableFace> {
-    return Json.decodeFromString(json)
-}
-
-fun serializeBitmap(bitmap: Bitmap): String {
-    val outputStream = ByteArrayOutputStream()
-    bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-    val byteArray = outputStream.toByteArray()
-    return Base64.encodeToString(byteArray, Base64.DEFAULT)
-}
-
-fun deserializeBitmap(base64: String): Bitmap {
-    val byteArray = Base64.decode(base64, Base64.DEFAULT)
-    return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
-}
-
 fun bitmapToUri(context: Context, bitmap: Bitmap): Uri {
     val file = File(context.cacheDir, "temp_image_${System.currentTimeMillis()}.png")
     FileOutputStream(file).use { outputStream ->

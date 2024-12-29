@@ -100,7 +100,6 @@ class RegisterViewModel @Inject constructor() : ViewModel() {
                 val face = try {
                     convertBitmapToFace(_registeredPhotoBitmap.value!!)
                 } catch (e: Throwable) {
-                    println("Face conversion failed: ${e.message}")
                     val throwable = Throwable("Face conversion failed: ${e.message}")
                     _registerState.value = State.Error(throwable)
                     return@launch
@@ -112,7 +111,6 @@ class RegisterViewModel @Inject constructor() : ViewModel() {
                             convertBitmapToInputImage(_registeredPhotoBitmap.value!!)
                         val labeler = ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS)
                         labeler.process(registerInputImage).addOnSuccessListener { labels ->
-                            println("Labeler success: $labels")
                             for (label in labels) {
                                 println("Label: ${label.text}, confidence: ${label.confidence}")
                                 _imageLabelsState.value += ImageLabel(
@@ -122,6 +120,8 @@ class RegisterViewModel @Inject constructor() : ViewModel() {
                             }
                         }.addOnFailureListener { throwable ->
                             println("Labeler error: ${throwable.message}")
+                            _registerState.value = State.Error(throwable)
+                            return@addOnFailureListener
                         }
                         
                         val throwable = Throwable("Face not valid")

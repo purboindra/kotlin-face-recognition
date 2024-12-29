@@ -105,37 +105,35 @@ fun RegisterScreen(
             verticalArrangement = Arrangement.Center
         ) {
             
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                
-                if (registeredImage != null) {
-                    Image(
-                        bitmap = registeredImage!!.asImageBitmap(),
-                        contentDescription = "Image Preview",
-                        modifier = Modifier
-                            .width(102.dp)
-                            .height(102.dp)
-                            .clip(CircleShape)
-                            .clickable {
-                                navHostController.navigate(
-                                    "camera_preview/${false}"
-                                )
-                            },
-                        contentScale = ContentScale.Crop,
-                    )
-                } else {
-                    ElevatedButton(
-                        onClick = {
+            if (registeredImage != null) {
+                Image(
+                    bitmap = registeredImage!!.asImageBitmap(),
+                    contentDescription = "Image Preview",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(248.dp)
+                        .clickable {
                             navHostController.navigate(
                                 "camera_preview/${false}"
                             )
                         },
-                    ) {
-                        Text("Take photo")
-                    }
+                    contentScale = ContentScale.Crop,
+                )
+            } else {
+                ElevatedButton(
+                    onClick = {
+                        navHostController.navigate(
+                            "camera_preview/${false}"
+                        )
+                    },
+                ) {
+                    Text("Take photo")
                 }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 
                 Spacer(modifier = Modifier.width(10.dp))
                 
